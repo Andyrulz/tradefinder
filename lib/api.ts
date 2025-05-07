@@ -82,6 +82,44 @@ function getNextTwelveDataApiKey() {
   return key;
 }
 
+// Helper for actionable advice
+function getIndicatorAdvice(name: string, value: any, signal: string) {
+  if (name === 'RSI (14)') {
+    if (value > 70) return 'Overbought. Consider taking profits or waiting for pullback.';
+    if (value < 30) return 'Oversold. Look for potential buying opportunities.';
+    if (value > 60) return 'Bullish momentum. Consider entering on pullbacks.';
+    if (value < 40) return 'Bearish momentum. Consider reducing exposure.';
+    return 'Neutral. Wait for clearer signals.';
+  }
+  if (name === 'MACD') {
+    if (value > 0) return 'Bullish momentum. Consider entering on pullbacks.';
+    if (value < 0) return 'Bearish momentum. Consider reducing exposure.';
+    return 'Neutral. Wait for clearer signals.';
+  }
+  if (name === 'Bollinger Bands') {
+    if (signal === 'bullish') return 'Price near lower band. Look for potential buying opportunities.';
+    if (signal === 'bearish') return 'Price near upper band. Consider taking partial profits.';
+    return 'Price within bands. Wait for breakout or breakdown.';
+  }
+  if (name === 'Average Daily Return') {
+    if (value !== 'N/A') {
+      const numericValue = parseFloat(value);
+      if (numericValue > 0.1) return 'Strong positive returns. Consider entering or holding.';
+      if (numericValue < -0.1) return 'Strong negative returns. Consider reducing exposure.';
+      return 'Neutral returns. Wait for trend to develop.';
+    }
+  }
+  if (name === 'Volatility') {
+    if (value !== 'N/A') {
+      const numericValue = parseFloat(value);
+      if (numericValue > 3.5) return 'High volatility. Consider reducing position size or waiting for stabilization.';
+      if (numericValue < 1) return 'Low volatility. Consider waiting for a breakout.';
+      return 'Moderate volatility. Adjust position size accordingly.';
+    }
+  }
+  return '';
+}
+
 export async function getStockData(symbol: string, retries = 3, horizon: string = 'swing'): Promise<any> {
   // Check cache first
   const cached = getCachedStockData(symbol);
@@ -209,44 +247,6 @@ export async function getStockData(symbol: string, retries = 3, horizon: string 
       { price: closes[closes.length - 1] + 2 * atr, probability: 50, riskRewardRatio: 2.0 },
       { price: closes[closes.length - 1] + 3 * atr, probability: 30, riskRewardRatio: 2.5 }
     ];
-
-    // Helper for actionable advice
-    function getIndicatorAdvice(name: string, value: any, signal: string) {
-      if (name === 'RSI (14)') {
-        if (value > 70) return 'Overbought. Consider taking profits or waiting for pullback.';
-        if (value < 30) return 'Oversold. Look for potential buying opportunities.';
-        if (value > 60) return 'Bullish momentum. Consider entering on pullbacks.';
-        if (value < 40) return 'Bearish momentum. Consider reducing exposure.';
-        return 'Neutral. Wait for clearer signals.';
-      }
-      if (name === 'MACD') {
-        if (value > 0) return 'Bullish momentum. Consider entering on pullbacks.';
-        if (value < 0) return 'Bearish momentum. Consider reducing exposure.';
-        return 'Neutral. Wait for clearer signals.';
-      }
-      if (name === 'Bollinger Bands') {
-        if (signal === 'bullish') return 'Price near lower band. Look for potential buying opportunities.';
-        if (signal === 'bearish') return 'Price near upper band. Consider taking partial profits.';
-        return 'Price within bands. Wait for breakout or breakdown.';
-      }
-      if (name === 'Average Daily Return') {
-        if (value !== 'N/A') {
-          const numericValue = parseFloat(value);
-          if (numericValue > 0.1) return 'Strong positive returns. Consider entering or holding.';
-          if (numericValue < -0.1) return 'Strong negative returns. Consider reducing exposure.';
-          return 'Neutral returns. Wait for trend to develop.';
-        }
-      }
-      if (name === 'Volatility') {
-        if (value !== 'N/A') {
-          const numericValue = parseFloat(value);
-          if (numericValue > 3.5) return 'High volatility. Consider reducing position size or waiting for stabilization.';
-          if (numericValue < 1) return 'Low volatility. Consider waiting for a breakout.';
-          return 'Moderate volatility. Adjust position size accordingly.';
-        }
-      }
-      return '';
-    }
 
     // Indicators (with actionable advice)
     const indicators = [
