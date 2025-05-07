@@ -211,7 +211,7 @@ export async function getStockData(symbol: string, retries = 3, horizon: string 
     ];
 
     // Helper for actionable advice
-    function getIndicatorAdvice(name, value, signal) {
+    function getIndicatorAdvice(name: string, value: any, signal: string) {
       if (name === 'RSI (14)') {
         if (value > 70) return 'Overbought. Consider taking profits or waiting for pullback.';
         if (value < 30) return 'Oversold. Look for potential buying opportunities.';
