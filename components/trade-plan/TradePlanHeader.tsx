@@ -8,9 +8,10 @@ interface TradePlanHeaderProps {
     request_count?: number;
     total_requests?: number;
   };
+  onTimeframeChange?: (horizon: string) => void;
 }
 
-export function TradePlanHeader({ tradePlan }: TradePlanHeaderProps) {
+export function TradePlanHeader({ tradePlan, onTimeframeChange }: TradePlanHeaderProps) {
   return (
     <>
       <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -35,13 +36,13 @@ export function TradePlanHeader({ tradePlan }: TradePlanHeaderProps) {
           )}
         </div>
         {/* Timeframe Selector injected here for top-level control */}
-        {typeof tradePlan.onTimeframeChange === 'function' && (
+        {typeof onTimeframeChange === 'function' && (
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">Time Horizon:</span>
             <select
               className="border rounded px-2 py-1 text-sm"
               value={tradePlan.timeHorizon}
-              onChange={e => tradePlan.onTimeframeChange(e.target.value)}
+              onChange={e => onTimeframeChange(e.target.value)}
             >
               <option value="swing">Swing (1-5 days)</option>
               <option value="positional">Positional (2-4 weeks)</option>
