@@ -162,7 +162,7 @@ export async function getStockData(symbol: string, retries = 3, horizon: string 
     let avgReturn = 'N/A';
     let volatility = 'N/A';
     if (closes.length > 1) {
-      const returns = closes.slice(1).map((c, i) => (c - closes[i]) / closes[i]);
+      const returns = closes.slice(1).map((c: number, i: number) => (c - closes[i]) / closes[i]);
       const mean = returns.reduce((a: number, b: number) => a + b, 0) / returns.length;
       avgReturn = (mean * 100).toFixed(2);
       const variance = returns.reduce((a: number, b: number) => a + Math.pow(b - mean, 2), 0) / returns.length;

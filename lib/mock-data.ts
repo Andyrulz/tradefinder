@@ -115,13 +115,12 @@ const mockStocks = [
 ];
 
 export function getMockScreenerStocks(filters: ScreenerFilters): ScreenerStock[] {
-  return mockStocks.map(stock => {
-    const matchedTraits = mockTraits.map(trait => ({
+  return mockStocks.map((stock: any) => {
+    const matchedTraits = mockTraits.map((trait: any) => ({
       ...trait,
-      matched: Math.random() > 0.4
+      matched: Math.random() > 0.5,
     }));
-
-    const score = matchedTraits.filter(t => t.matched).length;
+    const score = matchedTraits.filter((t: any) => t.matched).length;
 
     if (score < filters.minTraits) return null;
 
