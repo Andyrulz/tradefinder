@@ -1,3 +1,5 @@
+"use client";
+
 import { TradePlan } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Clock, TrendingUp, DollarSign, BarChart } from 'lucide-react';
