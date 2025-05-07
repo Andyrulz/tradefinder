@@ -138,7 +138,7 @@ export async function getStockData(symbol: string, retries = 3, horizon: string 
     // Volume status
     const volumeStatus = (() => {
       if (volumes.length < 20) return 'Normal';
-      const avgVolume = volumes.slice(-20).reduce((a, b) => a + b, 0) / 20;
+      const avgVolume = volumes.slice(-20).reduce((a: number, b: number) => a + b, 0) / 20;
       const currentVolume = volumes[volumes.length - 1];
       if (currentVolume > avgVolume * 1.5) return 'Above Average';
       if (currentVolume < avgVolume * 0.7) return 'Below Average';
@@ -163,9 +163,9 @@ export async function getStockData(symbol: string, retries = 3, horizon: string 
     let volatility = 'N/A';
     if (closes.length > 1) {
       const returns = closes.slice(1).map((c, i) => (c - closes[i]) / closes[i]);
-      const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
+      const mean = returns.reduce((a: number, b: number) => a + b, 0) / returns.length;
       avgReturn = (mean * 100).toFixed(2);
-      const variance = returns.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / returns.length;
+      const variance = returns.reduce((a: number, b: number) => a + Math.pow(b - mean, 2), 0) / returns.length;
       volatility = (Math.sqrt(variance) * 100).toFixed(2);
     }
 
@@ -353,7 +353,7 @@ export async function getStockData(symbol: string, retries = 3, horizon: string 
         trend,
         volumeStatus,
         volumeConfirming,
-        averageVolume: volumes.length > 0 ? (volumes.reduce((a, b) => a + b, 0) / volumes.length) : 0,
+        averageVolume: volumes.length > 0 ? (volumes.reduce((a: number, b: number) => a + b, 0) / volumes.length) : 0,
         currentVolume: volumes.length > 0 ? volumes[volumes.length - 1] : 0,
         breakoutStrength: 0, // Placeholder
         hasRecentEarnings: false, // Placeholder
