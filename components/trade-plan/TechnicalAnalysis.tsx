@@ -20,8 +20,8 @@ export function TechnicalAnalysis({ tradePlan }: TechnicalAnalysisProps) {
   const indicators = tradePlan.indicators || [];
   const horizon = tradePlan.timeHorizon;
   const timeframeLabel = horizon === 'longterm' ? 'Long-Term' : horizon === 'positional' ? 'Positional' : 'Swing';
-  const bullishCount = indicators.filter(i => i.signal === 'bullish').length;
-  const bearishCount = indicators.filter(i => i.signal === 'bearish').length;
+  const bullishCount = indicators.filter((i: TechnicalIndicator) => i.signal === 'bullish').length;
+  const bearishCount = indicators.filter((i: TechnicalIndicator) => i.signal === 'bearish').length;
   let actionableSummary = '';
   let summaryColor = 'text-gray-700';
   if (bullishCount >= 2) {
