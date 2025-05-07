@@ -15,6 +15,7 @@ export interface TechnicalIndicator {
     bullish: number;
     bearish: number;
   };
+  actionableAdvice?: string;
 }
 
 export interface StockMetrics {
