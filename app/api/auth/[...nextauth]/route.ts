@@ -1,6 +1,9 @@
 import NextAuth from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import { supabase } from '@/lib/supabase';
+import type { Session, User } from 'next-auth';
+import type { JWT } from 'next-auth/jwt';
+import type { SessionStrategy } from 'next-auth';
 
 const authOptions = {
   providers: [
@@ -10,10 +13,10 @@ const authOptions = {
     }),
   ],
   session: {
-    strategy: 'jwt',
+    strategy: 'jwt' as SessionStrategy,
   },
   callbacks: {
-    async signIn({ user }) {
+    async signIn({ user }: { user: User }) {
       if (user?.email) {
         await supabase
           .from('users')
@@ -21,7 +24,7 @@ const authOptions = {
       }
       return true;
     },
-    async session({ session, token }) {
+    async session({ session, token }: { session: Session; token: JWT }) {
       if (session.user) {
         session.user.id = token.sub;
       }
