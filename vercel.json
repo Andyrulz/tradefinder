@@ -1,0 +1,8 @@
+{
+  "cron": [
+    {
+      "path": "/api/momentum-screener/refresh",
+      "schedule": "0 7,12,16 * * *"
+    }
+  ]
+}

@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { useState } from 'react';
 import { ScreenerStock, ScreenerFilters as FilterType } from '@/lib/types';
 import { getMockScreenerStocks } from '@/lib/mock-data';
+import DiscoverScreener from './DiscoverScreener';
 
 export function HeroSection() {
   const [stocks, setStocks] = useState<ScreenerStock[]>([]);
@@ -103,49 +104,7 @@ export function HeroSection() {
                   </div>
                 </TabsContent>
                 <TabsContent value="discover" className="space-y-6 animate-in fade-in-50 duration-500">
-                  <div className="bg-sky-50/80 p-6 rounded-2xl shadow-sm flex flex-col gap-4 mb-2 border border-sky-100">
-                    <div className="flex items-center gap-2 justify-between">
-                      <span className="font-bold text-sky-800 text-lg">Get a Personalized Trading Plan – Tailored Just for You</span>
-                    </div>
-                    <div className="text-sky-700 text-base font-medium">
-                      Unlock expert-curated stock picks and trading setups crafted to your goals — including detailed entries, exits, risk/reward, probability of profit, and adjustment strategies.
-                    </div>
-                    <div className="text-base text-sky-800 bg-sky-100 rounded-lg px-3 py-2 font-semibold flex items-center gap-2">
-                      <span role="img" aria-label="search">🔍</span>
-                      Just drop your email below. I&apos;ll reach out within 24 hours with your custom plan details and next steps.
-                    </div>
-                    {submitted ? (
-                      <div className="flex flex-col items-center justify-center py-8">
-                        <div className="text-3xl mb-2">🎉</div>
-                        <div className="font-bold text-lg text-sky-800 mb-1">Thank you!</div>
-                        <div className="text-base text-sky-700 text-center">Your request has been received.<br />You&apos;ll hear from us within 24 hours.</div>
-                      </div>
-                    ) : (
-                      <form
-                        className="flex flex-col sm:flex-row gap-2 mt-2 items-stretch w-full"
-                        onSubmit={handleFormspreeSubmit}
-                        action="https://formspree.io/f/xnndpbwn"
-                        method="POST"
-                      >
-                        <input
-                          type="email"
-                          name="email"
-                          value={email}
-                          onChange={e => setEmail(e.target.value)}
-                          placeholder="Enter your email"
-                          className="flex-1 min-w-0 border rounded-xl px-4 py-3 text-lg shadow-sm focus:ring-2 focus:ring-sky-200 focus:outline-none transition-all duration-200"
-                          required
-                        />
-                        <Button
-                          type="submit"
-                          className="sm:w-auto w-full rounded-xl text-lg px-8 py-3 shadow-md transition-all duration-300 font-semibold bg-gradient-to-r from-sky-400 to-green-500 hover:from-green-500 hover:to-sky-400 text-white"
-                        >
-                          Submit
-                        </Button>
-                      </form>
-                    )}
-                    {error && <div className="text-red-600 text-sm mt-2">{error}</div>}
-                  </div>
+                  <DiscoverScreener />
                 </TabsContent>
               </Tabs>
             </div>

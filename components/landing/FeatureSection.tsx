@@ -4,6 +4,7 @@ import {
   Layers,
   BookOpen,
 } from 'lucide-react';
+import DiscoverScreener from './DiscoverScreener';
 
 export function FeatureSection() {
   const features = [
@@ -43,8 +44,8 @@ export function FeatureSection() {
             and basic technical indicators to make informed decisions.
           </p>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <DiscoverScreener />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mt-12">
           {features.map((feature, index) => (
             <div
               key={index}
