@@ -56,6 +56,12 @@ function getBaseUrl() {
   return process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 }
 
+// Helper to safely parse numbers from API responses
+const safeNumber = (val: any) => {
+  if (val === undefined || val === null || val === '' || val === 'null' || isNaN(Number(val))) return undefined;
+  return Number(val);
+};
+
 export async function validateStockSymbol(symbol: string): Promise<boolean> {
   try {
     // Use Twelve Data to validate symbol by checking if we get a valid time_series response
@@ -307,41 +313,8 @@ export async function getStockData(symbol: string, retries = 3, horizon: string 
       },
       keyLevels: [], // Add logic if needed
       atr,
-      chartData: { annotations: { entry: [], stop: [], targets: [], trailingStops: [] }, indicators: [] },
-      fundamentals: {
-        marketCap: null,
-        peRatio: null,
-        eps: null,
-        dividend: null,
-        sharesOutstanding: null,
-        sector: '',
-        industry: '',
-        name: symbol
-      }
+      chartData: { annotations: { entry: [], stop: [], targets: [], trailingStops: [] }, indicators: [] }
     };
-    // Fetch fundamental data from Twelve Data /quote endpoint
-    const quoteRes = await fetch(`https://api.twelvedata.com/quote?symbol=${symbol}&apikey=${twelveDataApiKey}`);
-    const quoteJson = await quoteRes.json();
-
-    // Extract key fundamentals (robust parsing)
-    function safeNumber(val: any) {
-      if (val === undefined || val === null || val === '' || val === 'null' || isNaN(Number(val))) return undefined;
-      return Number(val);
-    }
-    const fundamentals = {
-      marketCap: safeNumber(quoteJson.market_cap),
-      peRatio: safeNumber(quoteJson.pe),
-      eps: safeNumber(quoteJson.eps),
-      dividend: safeNumber(quoteJson.dividend),
-      sharesOutstanding: safeNumber(quoteJson.outstanding_shares),
-      sector: quoteJson.sector || tdJson.meta?.sector || '',
-      industry: quoteJson.industry || tdJson.meta?.industry || '',
-      name: quoteJson.name || tdJson.meta?.name || symbol
-    };
-
-    // Merge fundamentals into trade plan
-    Object.assign(tradePlan.fundamentals, fundamentals);
-
     setCachedStockData(symbol, tradePlan);
     return tradePlan;
   } catch (error) {
