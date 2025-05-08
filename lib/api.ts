@@ -1,8 +1,16 @@
 import { TechnicalIndicator, IndicatorSignal } from './types';
 
-// Hardcoded API key for development
-const FINNHUB_API_KEY = 'd09nts9r01qus8rebcbgd09nts9r01qus8rebcc0';
-const FINNHUB_BASE_URL = 'https://finnhub.io/api/v1';
+// API key rotation setup
+const twelveDataApiKeys = [
+  process.env.NEXT_PUBLIC_TWELVE_DATA_API_KEY_1 || '4b0c95181f434ef5be044c825bd15b37',
+  process.env.NEXT_PUBLIC_TWELVE_DATA_API_KEY_2 || '4b0c95181f434ef5be044c825bd15b37',
+];
+let twelveDataKeyIndex = 0;
+function getNextTwelveDataApiKey() {
+  const key = twelveDataApiKeys[twelveDataKeyIndex];
+  twelveDataKeyIndex = (twelveDataKeyIndex + 1) % twelveDataApiKeys.length;
+  return key;
+}
 
 // Simple in-memory cache fallback (for SSR or Node)
 const memoryCache: Record<string, { data: any; timestamp: number }> = {};
@@ -48,76 +56,17 @@ function getBaseUrl() {
   return process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 }
 
-async function fetchQuote(symbol: string) {
-  const baseUrl = getBaseUrl();
-  const response = await fetch(`${baseUrl}/api/finnhub?symbol=${symbol}`);
-  
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-    throw new Error(errorData.error || `API request failed with status ${response.status}`);
-  }
-  
-  return response.json();
-}
-
 export async function validateStockSymbol(symbol: string): Promise<boolean> {
   try {
-    const data = await fetchQuote(symbol);
-    return data && data.quote && typeof data.quote.c === 'number' && data.quote.c > 0;
+    // Use Twelve Data to validate symbol by checking if we get a valid time_series response
+    const twelveDataApiKey = getNextTwelveDataApiKey();
+    const tdRes = await fetch(`https://api.twelvedata.com/time_series?symbol=${symbol}&interval=1min&outputsize=1&apikey=${twelveDataApiKey}`);
+    const tdJson = await tdRes.json();
+    return tdJson && Array.isArray(tdJson.values) && tdJson.values.length > 0 && !tdJson.code;
   } catch (error) {
     console.error('Error validating stock symbol:', error);
     return false;
   }
-}
-
-// API key rotation setup
-const twelveDataApiKeys = [
-  process.env.NEXT_PUBLIC_TWELVE_DATA_API_KEY_1 || '4b0c95181f434ef5be044c825bd15b37',
-  process.env.NEXT_PUBLIC_TWELVE_DATA_API_KEY_2 || '4b0c95181f434ef5be044c825bd15b37',
-];
-let twelveDataKeyIndex = 0;
-function getNextTwelveDataApiKey() {
-  const key = twelveDataApiKeys[twelveDataKeyIndex];
-  twelveDataKeyIndex = (twelveDataKeyIndex + 1) % twelveDataApiKeys.length;
-  return key;
-}
-
-// Helper for actionable advice
-function getIndicatorAdvice(name: string, value: any, signal: string) {
-  if (name === 'RSI (14)') {
-    if (value > 70) return 'Overbought. Consider taking profits or waiting for pullback.';
-    if (value < 30) return 'Oversold. Look for potential buying opportunities.';
-    if (value > 60) return 'Bullish momentum. Consider entering on pullbacks.';
-    if (value < 40) return 'Bearish momentum. Consider reducing exposure.';
-    return 'Neutral. Wait for clearer signals.';
-  }
-  if (name === 'MACD') {
-    if (value > 0) return 'Bullish momentum. Consider entering on pullbacks.';
-    if (value < 0) return 'Bearish momentum. Consider reducing exposure.';
-    return 'Neutral. Wait for clearer signals.';
-  }
-  if (name === 'Bollinger Bands') {
-    if (signal === 'bullish') return 'Price near lower band. Look for potential buying opportunities.';
-    if (signal === 'bearish') return 'Price near upper band. Consider taking partial profits.';
-    return 'Price within bands. Wait for breakout or breakdown.';
-  }
-  if (name === 'Average Daily Return') {
-    if (value !== 'N/A') {
-      const numericValue = parseFloat(value);
-      if (numericValue > 0.1) return 'Strong positive returns. Consider entering or holding.';
-      if (numericValue < -0.1) return 'Strong negative returns. Consider reducing exposure.';
-      return 'Neutral returns. Wait for trend to develop.';
-    }
-  }
-  if (name === 'Volatility') {
-    if (value !== 'N/A') {
-      const numericValue = parseFloat(value);
-      if (numericValue > 3.5) return 'High volatility. Consider reducing position size or waiting for stabilization.';
-      if (numericValue < 1) return 'Low volatility. Consider waiting for a breakout.';
-      return 'Moderate volatility. Adjust position size accordingly.';
-    }
-  }
-  return '';
 }
 
 export async function getStockData(symbol: string, retries = 3, horizon: string = 'swing'): Promise<any> {
@@ -126,16 +75,6 @@ export async function getStockData(symbol: string, retries = 3, horizon: string 
   if (cached) return cached;
 
   try {
-    // Get quote data
-    const data = await fetchQuote(symbol);
-
-    if (!data || !data.quote || !data.quote.c) {
-      throw new Error('Invalid quote data received');
-    }
-
-    const quoteData = data.quote;
-    const profileData = data.profile;
-
     // Set interval and outputsize based on horizon
     let interval = '1day';
     let outputsize = 30;
@@ -144,13 +83,14 @@ export async function getStockData(symbol: string, retries = 3, horizon: string 
       interval = '1week';
       outputsize = 104;
     }
-    // Fetch real historical price data from Twelve Data (with key rotation)
+    // Fetch historical + live price data from Twelve Data
     const twelveDataApiKey = getNextTwelveDataApiKey();
     const tdRes = await fetch(`https://api.twelvedata.com/time_series?symbol=${symbol}&interval=${interval}&outputsize=${outputsize}&apikey=${twelveDataApiKey}`);
     const tdJson = await tdRes.json();
     if (!tdJson.values || !Array.isArray(tdJson.values)) {
       throw new Error('Failed to fetch historical data from Twelve Data');
     }
+    // The first value is the latest (live) data
     const priceHistory = tdJson.values.map((v: any) => ({
       date: v.datetime,
       open: parseFloat(v.open),
@@ -159,6 +99,7 @@ export async function getStockData(symbol: string, retries = 3, horizon: string 
       close: parseFloat(v.close),
       volume: parseInt(v.volume, 10)
     })).reverse();
+    const latest = tdJson.values[0];
 
     // Define closes and volumes arrays at the top for use in all analytics
     const closes = priceHistory.map((p: any) => p.close);
@@ -329,8 +270,8 @@ export async function getStockData(symbol: string, retries = 3, horizon: string 
     // --- END: Build full TradePlan object ---
     const tradePlan = {
       symbol,
-      companyName: profileData?.name || symbol,
-      currentPrice: quoteData.c,
+      companyName: tdJson.meta?.name || symbol,
+      currentPrice: parseFloat(latest.close),
       direction: bullishSignals > bearishSignals ? 'bullish' : bearishSignals > bullishSignals ? 'bearish' : 'neutral',
       timeHorizon: horizon,
       confidenceLevel,
@@ -358,16 +299,49 @@ export async function getStockData(symbol: string, retries = 3, horizon: string 
         breakoutStrength: 0, // Placeholder
         hasRecentEarnings: false, // Placeholder
         listingAge: 0, // Placeholder
-        marketCap: profileData?.marketCapitalization || 0,
+        marketCap: tdJson.meta?.market_cap || 0,
         peRatio: 0, // Placeholder
-        industry: profileData?.finnhubIndustry || '',
+        industry: tdJson.meta?.industry || '',
         isInfantIndustry: false, // Placeholder
         hasCatalyst: false, // Placeholder
       },
       keyLevels: [], // Add logic if needed
       atr,
-      chartData: { annotations: { entry: [], stop: [], targets: [], trailingStops: [] }, indicators: [] }
+      chartData: { annotations: { entry: [], stop: [], targets: [], trailingStops: [] }, indicators: [] },
+      fundamentals: {
+        marketCap: null,
+        peRatio: null,
+        eps: null,
+        dividend: null,
+        sharesOutstanding: null,
+        sector: '',
+        industry: '',
+        name: symbol
+      }
     };
+    // Fetch fundamental data from Twelve Data /quote endpoint
+    const quoteRes = await fetch(`https://api.twelvedata.com/quote?symbol=${symbol}&apikey=${twelveDataApiKey}`);
+    const quoteJson = await quoteRes.json();
+
+    // Extract key fundamentals (robust parsing)
+    function safeNumber(val: any) {
+      if (val === undefined || val === null || val === '' || val === 'null' || isNaN(Number(val))) return undefined;
+      return Number(val);
+    }
+    const fundamentals = {
+      marketCap: safeNumber(quoteJson.market_cap),
+      peRatio: safeNumber(quoteJson.pe),
+      eps: safeNumber(quoteJson.eps),
+      dividend: safeNumber(quoteJson.dividend),
+      sharesOutstanding: safeNumber(quoteJson.outstanding_shares),
+      sector: quoteJson.sector || tdJson.meta?.sector || '',
+      industry: quoteJson.industry || tdJson.meta?.industry || '',
+      name: quoteJson.name || tdJson.meta?.name || symbol
+    };
+
+    // Merge fundamentals into trade plan
+    Object.assign(tradePlan.fundamentals, fundamentals);
+
     setCachedStockData(symbol, tradePlan);
     return tradePlan;
   } catch (error) {
@@ -401,4 +375,41 @@ function calculateSimpleTechnicalScore(quoteData: any): number {
 
   // Ensure score stays within 0-100 range
   return Math.max(0, Math.min(100, score));
+}
+
+function getIndicatorAdvice(name: string, value: any, signal: string) {
+  if (name === 'RSI (14)') {
+    if (value > 70) return 'Overbought. Consider taking profits or waiting for pullback.';
+    if (value < 30) return 'Oversold. Look for potential buying opportunities.';
+    if (value > 60) return 'Bullish momentum. Consider entering on pullbacks.';
+    if (value < 40) return 'Bearish momentum. Consider reducing exposure.';
+    return 'Neutral. Wait for clearer signals.';
+  }
+  if (name === 'MACD') {
+    if (value > 0) return 'Bullish momentum. Consider entering on pullbacks.';
+    if (value < 0) return 'Bearish momentum. Consider reducing exposure.';
+    return 'Neutral. Wait for clearer signals.';
+  }
+  if (name === 'Bollinger Bands') {
+    if (signal === 'bullish') return 'Price near lower band. Look for potential buying opportunities.';
+    if (signal === 'bearish') return 'Price near upper band. Consider taking partial profits.';
+    return 'Price within bands. Wait for breakout or breakdown.';
+  }
+  if (name === 'Average Daily Return') {
+    if (value !== 'N/A') {
+      const numericValue = parseFloat(value);
+      if (numericValue > 0.1) return 'Strong positive returns. Consider entering or holding.';
+      if (numericValue < -0.1) return 'Strong negative returns. Consider reducing exposure.';
+      return 'Neutral returns. Wait for trend to develop.';
+    }
+  }
+  if (name === 'Volatility') {
+    if (value !== 'N/A') {
+      const numericValue = parseFloat(value);
+      if (numericValue > 3.5) return 'High volatility. Consider reducing position size or waiting for stabilization.';
+      if (numericValue < 1) return 'Low volatility. Consider waiting for a breakout.';
+      return 'Moderate volatility. Adjust position size accordingly.';
+    }
+  }
+  return '';
 }

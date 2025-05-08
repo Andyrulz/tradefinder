@@ -1,6 +1,6 @@
 'use client';
 
-import { TechnicalIndicator, IndicatorSignal } from '@/lib/types';
+import { TechnicalIndicator } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -47,49 +47,52 @@ export function TechnicalAnalysis({ tradePlan }: TechnicalAnalysisProps) {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>Actionable Technical Insights <span className="ml-2 text-xs font-normal text-muted-foreground">[{timeframeLabel}]</span></CardTitle>
-        </div>
-        <div className={`mt-2 text-base font-semibold ${summaryColor}`}>{actionableSummary}</div>
-      </CardHeader>
-      <CardContent>
-        {indicators.length === 0 ? (
-          <div className="text-muted-foreground text-sm">No technical indicators available for this stock.</div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {indicators.map((indicator: TechnicalIndicator, index: number) => (
-              <div key={index} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-semibold">{indicator.name}</h3>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <Info className="h-4 w-4 text-muted-foreground" />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{indicator.education}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                  <Badge className={getSignalColor(indicator.signal)}>
-                    {indicator.signal.toUpperCase()}
-                  </Badge>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {indicator.description}
-                </div>
-                <div className="text-sm font-medium">
-                  <span className="font-semibold">What to do:</span> {indicator.actionableAdvice || ''}
-                </div>
-              </div>
-            ))}
+    <>
+      {/* Technical Analysis Section */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>Actionable Technical Insights <span className="ml-2 text-xs font-normal text-muted-foreground">[{timeframeLabel}]</span></CardTitle>
           </div>
-        )}
-      </CardContent>
-    </Card>
+          <div className={`mt-2 text-base font-semibold ${summaryColor}`}>{actionableSummary}</div>
+        </CardHeader>
+        <CardContent>
+          {indicators.length === 0 ? (
+            <div className="text-muted-foreground text-sm">No technical indicators available for this stock.</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {indicators.map((indicator: TechnicalIndicator, index: number) => (
+                <div key={index} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold">{indicator.name}</h3>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <Info className="h-4 w-4 text-muted-foreground" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{indicator.education}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <Badge className={getSignalColor(indicator.signal)}>
+                      {indicator.signal.toUpperCase()}
+                    </Badge>
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {indicator.description}
+                  </div>
+                  <div className="text-sm font-medium">
+                    <span className="font-semibold">What to do:</span> {indicator.actionableAdvice || ''}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </>
   );
 }

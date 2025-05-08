@@ -45,7 +45,7 @@ export default function ContactPage() {
           <button type="submit" className="w-full py-2 px-4 bg-primary text-white font-bold rounded-md hover:bg-primary/90 transition">Send Message</button>
         </form>
         {status === 'success' && <p className="mt-4 text-green-600">Thank you! Your message has been sent.</p>}
-        {status === 'error' && <p className="mt-4 text-red-600">Oops! Something went wrong. Please try again.</p>}
+        {status === 'error' && <p className="mt-4 text-red-600">Oops! Something went wrong. Please try again or feel free to send a mail directly to me at andrew.labyrinthventures@gmail.com</p>}
       </div>
     </div>
   );
