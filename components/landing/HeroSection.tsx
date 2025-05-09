@@ -64,10 +64,11 @@ export function HeroSection() {
               Professional Trading Tools
             </div>
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-foreground leading-tight">
-              Trade with <span className="text-primary bg-primary/10 px-2 rounded-md">confidence</span> using data-driven plans
+              Trade with <span className="text-primary bg-primary/10 px-2 rounded-md">confidence</span> <br className="hidden md:inline" />
+              <span className="text-sky-700">Find High Momentum Stocks</span>
             </h1>
             <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl leading-relaxed">
-              Get institutional-grade trade plans powered by technical analysis. Perfect for both beginners and experienced traders seeking clear, actionable guidance.
+              Instantly generate institutional-grade trade plans <b>or</b> discover today’s top momentum stocks—powered by technical analysis. Perfect for both beginners and experienced traders seeking clear, actionable guidance and fresh opportunities.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <Button size="lg" variant="outline" asChild className="group rounded-xl text-lg px-8 py-4 border-2 border-sky-300 hover:border-sky-500 transition-all duration-300 hover:scale-105">
@@ -83,10 +84,10 @@ export function HeroSection() {
               <Tabs defaultValue="symbol" className="space-y-8 w-full">
                 <TabsList className="flex w-full bg-sky-50 rounded-full mb-6 p-1 gap-2">
                   <TabsTrigger value="symbol" className="flex-1 data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-sky-700 transition-all duration-300 rounded-full text-lg font-semibold px-4 py-2">
-                    I Know My Stock
+                    Generate Trade Plan
                   </TabsTrigger>
                   <TabsTrigger value="discover" className="flex-1 data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-sky-700 transition-all duration-300 rounded-full text-lg font-semibold px-4 py-2">
-                    Help Me Discover
+                    Find Momentum Stocks
                   </TabsTrigger>
                 </TabsList>
                 <TabsContent value="symbol" className="space-y-6 animate-in fade-in-50 duration-500">
@@ -104,6 +105,12 @@ export function HeroSection() {
                   </div>
                 </TabsContent>
                 <TabsContent value="discover" className="space-y-6 animate-in fade-in-50 duration-500">
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-bold text-center">Find High Momentum Stocks</h3>
+                    <p className="text-base text-muted-foreground text-center">
+                      Instantly screen for today’s top 10 actionable momentum stocks—refreshed every day.
+                    </p>
+                  </div>
                   <DiscoverScreener />
                 </TabsContent>
               </Tabs>

@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { getStockData } from '@/lib/api';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
 // Enhanced screening logic for best momentum stocks with long bases and tight setups
 function isMomentumCandidate(stock: any): { pass: boolean; reasons: string[]; score: number; paramScores: any } {
@@ -110,7 +112,32 @@ function getSetupTypeAndScore(paramScores: any, closes: number[]): { setup: stri
   return { setup: 'No actionable setup', setupScore: 0 };
 }
 
-export async function POST() {
+export async function POST(request: Request) {
+  // 1. Get user session
+  const session = await getServerSession(authOptions);
+  if (!session || !session.user?.email) {
+    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+  }
+  const email = session.user.email;
+  // 2. Get user from users table
+  const { data: user, error: userError } = await supabase
+    .from('users')
+    .select('id')
+    .eq('email', email)
+    .single();
+  if (!user) {
+    return NextResponse.json({ success: false, error: 'User not found' }, { status: 401 });
+  }
+  // 3. Get user plan
+  const { data: sub } = await supabase
+    .from('user_subscriptions')
+    .select('plan_type')
+    .eq('user_id', user.id)
+    .single();
+  if (!sub || sub.plan_type !== 'premium') {
+    return NextResponse.json({ success: false, error: 'Premium plan required' }, { status: 403 });
+  }
+
   // Fetch the latest 10 results from the cache table, ignoring date (get latest 10 by refreshed_at)
   const { data: results, error } = await supabase
     .from('momentum_screener_results')

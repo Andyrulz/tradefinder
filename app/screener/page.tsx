@@ -8,6 +8,9 @@ import { ScreenerStock, ScreenerFilters as FilterType } from '@/lib/types';
 import { AdSenseAd } from '@/components/ui/AdSenseAd';
 import Link from 'next/link';
 import { getMockScreenerStocks } from '@/lib/mock-data';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { createClient } from '@supabase/supabase-js';
 
 function ScreenerRow({ stock }: { stock: any }) {
   return (
@@ -52,6 +55,8 @@ export default function ScreenerPage() {
   const [stocks, setStocks] = useState<ScreenerStock[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [planType, setPlanType] = useState<'free' | 'pro' | 'premium' | null>(null);
+  const [showUpgrade, setShowUpgrade] = useState(false);
 
   useEffect(() => {
     const runScreener = async () => {
@@ -73,6 +78,39 @@ export default function ScreenerPage() {
     };
     runScreener();
   }, []);
+
+  useEffect(() => {
+    // Fetch user plan from Supabase (client-side, since this is a client component)
+    async function fetchPlan() {
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+      const sessionRes = await fetch('/api/auth/session');
+      const session = await sessionRes.json();
+      if (!session?.user?.email) return;
+      const { data: user } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', session.user.email)
+        .single();
+      if (!user) return;
+      const { data: sub } = await supabase
+        .from('user_subscriptions')
+        .select('plan_type')
+        .eq('user_id', user.id)
+        .single();
+      setPlanType(sub?.plan_type || 'free');
+    }
+    fetchPlan();
+  }, []);
+
+  // Only allow Premium users to run screener
+  useEffect(() => {
+    if (planType && planType !== 'premium') {
+      setShowUpgrade(true);
+    }
+  }, [planType]);
 
   const handleFilter = async (filters: FilterType) => {
     setLoading(true);
@@ -102,11 +140,33 @@ export default function ScreenerPage() {
           </div>
         )}
         {error && <div className="text-center text-red-500 py-8">{error}</div>}
-        <div className="mt-8">
-          {stocks.map((stock) => (
-            <ScreenerRow key={stock.symbol} stock={stock} />
-          ))}
-        </div>
+        {/* Screener results only for Premium users */}
+        {planType === 'premium' && (
+          <div className="mt-8">
+            {stocks.map((stock) => (
+              <ScreenerRow key={stock.symbol} stock={stock} />
+            ))}
+          </div>
+        )}
+        {/* Upgrade modal for non-premium users */}
+        <Dialog open={showUpgrade} onOpenChange={setShowUpgrade}>
+          <DialogContent>
+            <div className="text-center p-4">
+              <h2 className="text-2xl font-bold mb-2 text-sky-800">Unlock the Momentum Screener</h2>
+              <p className="mb-4 text-gray-700 text-lg">
+                The Momentum Screener is your edge for finding the <span className="font-semibold text-sky-700">top 10 actionable stocks</span> every day—setups you won't find anywhere else. <br /><br />
+                <span className="font-semibold text-sky-700">Upgrade to Premium for just $14.65/month</span> (less than a night at the movies) and you could make back your subscription with a single great trade.
+              </p>
+              <p className="mb-6 text-gray-600 text-base">
+                Premium unlocks daily screener access, advanced filters, and priority support. Don’t miss out on the next big breakout!
+              </p>
+              <Button asChild size="lg" className="bg-yellow-400 hover:bg-yellow-500 text-sky-900 font-bold text-lg px-8 py-3 rounded-xl shadow-lg">
+                <Link href="/pricing">Upgrade to Premium</Link>
+              </Button>
+              <div className="mt-4 text-sm text-gray-500">Cancel anytime. No risk, all reward.</div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </main>
   );

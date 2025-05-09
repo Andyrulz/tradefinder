@@ -4,23 +4,23 @@ export function HowItWorks() {
   const steps = [
     {
       number: '01',
-      title: 'Enter Stock Symbol',
-      description: 'Input any publicly traded stock symbol to get started.',
+      title: 'Choose Your Path',
+      description: 'Enter a stock symbol to generate a trade plan, or click “Find Momentum Stocks” to discover today’s top setups.',
     },
     {
       number: '02',
-      title: 'View Basic Analysis',
-      description: 'Get basic technical indicators and market context for the stock.',
+      title: 'Get Instant Results',
+      description: 'Receive a detailed trade plan with entry, targets, and risk—or see the top 10 actionable momentum stocks for today.',
     },
     {
       number: '03',
-      title: 'Understand Signals',
-      description: 'Learn about the stock\'s current market position and technical score.',
+      title: 'Review Analysis',
+      description: 'Explore technical indicators, market context, and actionable insights for your selected stock or screener results.',
     },
     {
       number: '04',
-      title: 'Make Informed Decisions',
-      description: 'Use the basic analysis to help inform your investment decisions.',
+      title: 'Act with Confidence',
+      description: 'Use the generated plan or screener results to make informed trading decisions, every day.',
     },
   ];
 
@@ -30,7 +30,7 @@ export function HowItWorks() {
         <div className="text-center mb-16">
           <h2 className="text-3xl font-bold mb-4">How It Works</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Get started with basic stock analysis in four simple steps.
+            Instantly generate a trade plan <b>or</b> discover high momentum stocks in four simple steps.
           </p>
         </div>
 

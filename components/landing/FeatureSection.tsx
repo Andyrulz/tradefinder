@@ -38,10 +38,9 @@ export function FeatureSection() {
     <section className="py-24 bg-muted/50">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
-          <h2 className="text-3xl font-bold mb-4">Basic Stock Analysis</h2>
+          <h2 className="text-3xl font-bold mb-4">Trade Plans & Momentum Stock Discovery</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Get started with basic stock analysis using our free tools. Understand market context
-            and basic technical indicators to make informed decisions.
+            Instantly generate actionable trade plans for any stock <b>or</b> discover today’s top momentum stocks using our free, data-driven tools. Make informed decisions with technical analysis and market context at your fingertips.
           </p>
         </div>
         <DiscoverScreener />

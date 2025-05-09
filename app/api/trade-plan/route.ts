@@ -74,13 +74,16 @@ export async function POST(request: Request) {
   }
   const userId = user.id;
 
-  // 4. Ensure user_subscriptions exists
+  // 4. Ensure user_subscriptions exists and get plan_type
   const { data: sub, error: subError } = await supabase
     .from('user_subscriptions')
-    .select('user_id')
+    .select('user_id, plan_type')
     .eq('user_id', userId)
     .single();
-  if (!sub) {
+  let planType = 'free';
+  if (sub && sub.plan_type) {
+    planType = sub.plan_type;
+  } else {
     await supabase.from('user_subscriptions').insert({ user_id: userId, plan_type: 'free' });
   }
 
@@ -111,14 +114,41 @@ export async function POST(request: Request) {
     // Do not increment quota for these retries, so return usage with request_count 0
   }
 
-  // 6. Enforce quota (5 requests/day for free users)
-  if (usage.request_count >= 5) {
+  // 6. Enforce quota based on plan
+  let planLimit = 5;
+  if (planType === 'pro') planLimit = 100;
+  if (planType === 'premium') planLimit = 1000;
+  if (usage.request_count >= planLimit) {
+    let upgradeMessage = '';
+    let cta = '';
+    let displayLimit = planLimit;
+    if (planType === 'free') {
+      upgradeMessage =
+        'You have used up your daily quota of 5 trade plans. Upgrade to Pro or Premium for more requests and advanced features. Even one good trade can pay for your subscription!';
+      cta = 'Upgrade Now';
+    } else if (planType === 'pro') {
+      upgradeMessage =
+        'You have used up your daily quota of 100 trade plans. Upgrade to Premium to unlock 10x more requests, the exclusive Momentum Screener, and priority support. Premium is less than a night at the movies and could pay for itself with a single winning trade. Don’t miss out on the next big breakout—upgrade now!';
+      cta = 'Upgrade to Premium';
+      displayLimit = 100;
+    }
+    // Instead of a plain string, return error as a JSON string with upgrade info for frontend parsing
     return NextResponse.json({
-      error: 'You have used up your daily quota. Please come back tomorrow.',
+      error: JSON.stringify({
+        message: 'You have used up your daily quota. Please come back tomorrow.',
+        upgradeMessage,
+        cta,
+        ctaLink: '/pricing',
+      }),
       quotaExceeded: true,
       request_count: usage.request_count,
       total_requests: usage.total_requests,
-      date: today
+      date: today,
+      planType,
+      planLimit: displayLimit,
+      upgradeMessage,
+      cta,
+      ctaLink: '/pricing',
     }, { status: 429 });
   }
 

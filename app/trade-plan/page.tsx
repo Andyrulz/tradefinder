@@ -943,15 +943,84 @@ export default function TradePlanPage() {
   }, [session, symbol, horizon, fetchTradePlan]);
 
   if (quotaExceeded) {
+    // Parse upgrade info from error or API fields
+    let upgradeMessage, cta, ctaLink;
+    if (typeof error === 'string') {
+      try {
+        const parsed = JSON.parse(error);
+        upgradeMessage = parsed.upgradeMessage;
+        cta = parsed.cta;
+        ctaLink = parsed.ctaLink || '/pricing';
+      } catch {
+        upgradeMessage = undefined;
+        cta = undefined;
+        ctaLink = '/pricing';
+      }
+    } else if (error && typeof error === 'object') {
+      upgradeMessage = (error as any).upgradeMessage;
+      cta = (error as any).cta;
+      ctaLink = (error as any).ctaLink || '/pricing';
+    }
+    // fallback to API fields if available
+    if (!upgradeMessage && typeof (globalThis as any).upgradeMessage === 'string') {
+      upgradeMessage = (globalThis as any).upgradeMessage;
+    }
+    if (!cta && typeof (globalThis as any).cta === 'string') {
+      cta = (globalThis as any).cta;
+    }
+    if (!ctaLink && typeof (globalThis as any).ctaLink === 'string') {
+      ctaLink = (globalThis as any).ctaLink;
+    }
     return (
-      <main className="flex-1 pt-24 pb-12">
+      <main className="flex-1 pt-24 pb-12 bg-gradient-to-br from-blue-50 via-white to-blue-100">
         <div className="container mx-auto px-4 flex flex-col min-h-[60vh] justify-center items-center">
-          <h1 className="text-2xl font-bold mb-4">Daily Quota Reached</h1>
-          <p className="mb-6 text-muted-foreground text-center max-w-md">
-            You have used up your daily quota of trade plan generations. Please come back tomorrow.<br />
-            Requests today: {usageInfo?.request_count ?? 0} / 5
-          </p>
+          <div className="max-w-lg w-full">
+            <div className="bg-white/90 border border-blue-200 rounded-2xl shadow-lg p-8 flex flex-col items-center animate-fade-in">
+              <div className="flex flex-col items-center mb-4">
+                <svg width="48" height="48" fill="none" viewBox="0 0 48 48" className="mb-2">
+                  <circle cx="24" cy="24" r="24" fill="#DBEAFE"/>
+                  <path d="M24 14v10" stroke="#2563EB" strokeWidth="2.5" strokeLinecap="round"/>
+                  <circle cx="24" cy="32" r="2" fill="#2563EB"/>
+                </svg>
+                <h1 className="text-2xl font-bold text-blue-900 mb-1">Daily Quota Reached</h1>
+                <p className="text-sm text-muted-foreground text-center max-w-md">
+                  {upgradeMessage ? null : (typeof error === 'string' ? error : 'You have used up your daily quota. Please come back tomorrow.')}
+                </p>
+                <div className="mt-2 text-xs text-blue-800 font-medium bg-blue-100 rounded px-2 py-1">
+                  Requests today: {usageInfo?.request_count} / {usageInfo?.total_requests}
+                </div>
+              </div>
+              {upgradeMessage && (
+                <div className="w-full text-center mb-6">
+                  <div className="text-base font-semibold text-blue-900 mb-2 animate-fade-in-slow">
+                    {upgradeMessage}
+                  </div>
+                  {cta && (
+                    <a
+                      href={ctaLink}
+                      className="inline-block mt-4 px-8 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-blue-400 text-white font-bold shadow-lg hover:scale-105 hover:shadow-xl transition-all duration-200 text-lg animate-pulse-slow"
+                      style={{ animation: 'pulse 2.5s infinite' }}
+                    >
+                      {cta}
+                    </a>
+                  )}
+                  <div className="mt-4 text-xs text-muted-foreground">
+                    Premium unlocks 10x more requests, exclusive features, and priority support. Invest in your trading edge!
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
+        <style jsx global>{`
+          @keyframes pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37,99,235,0.4); }
+            50% { transform: scale(1.04); box-shadow: 0 0 16px 4px rgba(37,99,235,0.15); }
+          }
+          .animate-pulse-slow {
+            animation: pulse 2.5s infinite;
+          }
+        `}</style>
       </main>
     );
   }
