@@ -108,8 +108,8 @@ export async function getStockData(symbol: string, retries = 3, horizon: string 
     const latest = tdJson.values[0];
 
     // Define closes and volumes arrays at the top for use in all analytics
-    const closes = priceHistory.map((p: any) => p.close);
-    const volumes = priceHistory.map((p: any) => p.volume);
+    const closes = priceHistory.map((p: { close: number }) => p.close);
+    const volumes = priceHistory.map((p: { volume: number }) => p.volume);
 
     // Calculate trend early so it is available for all analytics
     const trend = (() => {
@@ -252,8 +252,8 @@ export async function getStockData(symbol: string, retries = 3, horizon: string 
     ];
 
     // Data-driven confidence and summary
-    const bullishSignals = indicators.filter(i => i.signal === 'bullish').length;
-    const bearishSignals = indicators.filter(i => i.signal === 'bearish').length;
+    const bullishSignals = indicators.filter((i: { signal: string }) => i.signal === 'bullish').length;
+    const bearishSignals = indicators.filter((i: { signal: string }) => i.signal === 'bearish').length;
     let confidenceLevel = 'medium';
     if (bullishSignals >= 2 && trend === 'uptrend' && volumeConfirming) confidenceLevel = 'high';
     else if (bearishSignals >= 2 && trend === 'downtrend') confidenceLevel = 'low';

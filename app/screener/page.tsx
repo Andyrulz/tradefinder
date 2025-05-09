@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ScreenerStock, ScreenerFilters as FilterType } from '@/lib/types';
 import { AdSenseAd } from '@/components/ui/AdSenseAd';
 import Link from 'next/link';
+import { getMockScreenerStocks } from '@/lib/mock-data';
 
 function ScreenerRow({ stock }: { stock: any }) {
   return (

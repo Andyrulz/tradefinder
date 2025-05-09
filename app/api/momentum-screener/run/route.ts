@@ -26,7 +26,7 @@ function isMomentumCandidate(stock: any): { pass: boolean; reasons: string[]; sc
   // Volume spike
   let volSpike = false;
   if (n > 20) {
-    const avgVol = priceHistory.slice(n-21, n-1).reduce((a, b) => a + b.volume, 0) / 20;
+    const avgVol = priceHistory.slice(n-21, n-1).reduce((a: number, b: { volume: number }) => a + b.volume, 0) / 20;
     volSpike = priceHistory[n-1].volume > avgVol * 1.5;
     paramScores.volSpike = volSpike;
     if (volSpike) { reasons.push('Volume spike'); score += 2; paramScores.volSpikeScore = 2; } else { paramScores.volSpikeScore = 0; }
@@ -35,14 +35,14 @@ function isMomentumCandidate(stock: any): { pass: boolean; reasons: string[]; sc
   // Proximity to 52w high
   let proximity = null;
   if (n > 0) {
-    const high52w = Math.max(...priceHistory.map(p => p.high));
+    const high52w = Math.max(...priceHistory.map((p: { high: number }) => p.high));
     proximity = (high52w - priceHistory[n-1].close) / high52w;
     paramScores.proximity = proximity;
     if (proximity < 0.05) { reasons.push('Near 52-week high'); score += 2; paramScores.proximityScore = 2; } else { paramScores.proximityScore = 0; }
   }
 
   // EMA Cross (20 > 50)
-  const closes = priceHistory.map(p => p.close);
+  const closes = priceHistory.map((p: { close: number }) => p.close);
   let ema20 = null, ema50 = null;
   if (closes.length >= 20) {
     const ema = (arr: number[], len: number) => {
@@ -111,12 +111,10 @@ function getSetupTypeAndScore(paramScores: any, closes: number[]): { setup: stri
 }
 
 export async function POST() {
-  const today = new Date().toISOString().slice(0, 10);
-  // Fetch the latest 10 results from the cache table
+  // Fetch the latest 10 results from the cache table, ignoring date (get latest 10 by refreshed_at)
   const { data: results, error } = await supabase
     .from('momentum_screener_results')
     .select('*')
-    .eq('date', today)
     .order('refreshed_at', { ascending: false })
     .limit(10);
   if (error) return NextResponse.json({ success: false, error: error.message });

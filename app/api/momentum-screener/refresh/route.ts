@@ -34,7 +34,7 @@ async function fetchNasdaqMomentumStocks() {
     symbol: row.ticker,
     company_name: row.companyName,
     source: 'nasdaq',
-  })).filter(s => s.symbol && s.company_name);
+  })).filter((s: any) => s.symbol && s.company_name);
 }
 
 export async function GET() {
@@ -80,6 +80,13 @@ export async function GET() {
       if (error) errors.push({ symbol: s.symbol, error: error.message });
       totalProcessed++;
     }
+    // Cleanup: Delete universe rows older than 3 days, but never for today
+    const todayDate = new Date().toISOString().slice(0, 10);
+    const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    await supabase.from('momentum_screener_daily')
+      .delete()
+      .lt('date', threeDaysAgo)
+      .not('date', 'eq', todayDate);
     return NextResponse.json({ success: true, totalProcessed, errors });
   } catch (e) {
     return NextResponse.json({ success: false, error: e?.toString() });
@@ -89,6 +96,10 @@ export async function GET() {
 export async function POST() {
   try {
     const today = new Date().toISOString().slice(0, 10);
+    // Define todayDate and threeDaysAgo at the start of the function for use in cleanup
+    const todayDate = new Date().toISOString().slice(0, 10);
+    const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
     // 1. Get all symbols from today's universe
     const { data: stocks, error } = await supabase
       .from('momentum_screener_daily')
@@ -139,18 +150,39 @@ export async function POST() {
     }
     // 3. Sort by confidence (high > medium > low > N/A)
     const confidenceRank = { high: 2, medium: 1, low: 0, 'N/A': -1 };
-    results.sort((a, b) => (confidenceRank[b.confidence] ?? -1) - (confidenceRank[a.confidence] ?? -1));
-    const top10 = results.slice(0, 10);
+    results.sort(
+      (a: any, b: any) =>
+        (confidenceRank[b.confidence as keyof typeof confidenceRank] ?? -1) -
+        (confidenceRank[a.confidence as keyof typeof confidenceRank] ?? -1)
+    );
+    const top15 = results.slice(0, 15);
 
-    // 4. Upsert top 10 into momentum_screener_results
+    // Delete all rows from momentum_screener_results before upserting (robust)
+    await supabase.from('momentum_screener_results').delete().not('id', 'is', null);
+
+    // Upsert top 15 into momentum_screener_results
     let upserted = 0;
     let upsertErrors: any[] = [];
-    for (const r of top10) {
+    for (const r of top15) {
       const { error: upsertError } = await supabase.from('momentum_screener_results').upsert(r, { onConflict: 'date,symbol' });
       if (!upsertError) upserted++;
       else upsertErrors.push({ symbol: r.symbol, error: upsertError.message, data: r });
     }
-    return NextResponse.json({ success: true, upserted, totalProcessed: results.length, upsertErrors, log });
+
+    // Debug: Fetch and log the first upserted row for today
+    let debugRow = null;
+    if (top15.length > 0) {
+      const { data: debugData } = await supabase
+        .from('momentum_screener_results')
+        .select('*')
+        .eq('date', today)
+        .eq('symbol', top15[0].symbol)
+        .order('refreshed_at', { ascending: false })
+        .limit(1);
+      debugRow = debugData && debugData.length > 0 ? debugData[0] : null;
+    }
+
+    return NextResponse.json({ success: true, upserted, totalProcessed: results.length, upsertErrors, log, debugRow });
   } catch (e) {
     return NextResponse.json({ success: false, error: e?.toString() });
   }
