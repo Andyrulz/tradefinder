@@ -104,7 +104,7 @@ export default function PricingPage() {
 				const containerId = `paypal-button-container-${planId}`;
 				if (!window.paypal) {
 					const script = document.createElement('script');
-					script.src = `https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&vault=true&intent=subscription&env=${PAYPAL_ENV}`;
+					script.src = `https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&vault=true&intent=subscription`;
 					script.async = true;
 					script.onload = () => renderPayPalButton(planId, planType);
 					document.body.appendChild(script);
