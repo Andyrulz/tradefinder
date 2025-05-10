@@ -1,2 +1,7 @@
 {
+  "functions": {
+    "api/momentum-screener/refresh/cron.ts": {
+      "schedule": "0 3 * * *"
+    }
+  }
 }

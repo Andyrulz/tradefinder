@@ -61,35 +61,6 @@ export default function Home() {
 				</div>
 			</section>
 			<TestimonialsSection />
-			<section className="hero-container">
-				<div className="hero-content">
-					<span className="text-4xl font-bold leading-tight block mb-2 text-balance max-w-md">Trade with confidence</span>
-					<span className="text-4xl font-bold leading-tight block mb-2 text-blue-700 text-balance max-w-md">Find High Momentum Stocks</span>
-					<p className="mt-4 text-lg text-muted-foreground max-w-md text-balance">
-						Instantly generate institutional-grade trade plans or discover today’s top momentum stocks—powered by technical analysis. Perfect for both beginners and experienced traders seeking clear, actionable guidance and fresh opportunities.
-					</p>
-				</div>
-			</section>
-			<section className="container mx-auto px-4 max-w-4xl py-12">
-				<div className="bg-white rounded-lg shadow-md p-6">
-					<h3 className="text-xl font-semibold mb-4 text-center">
-						Enter Stock Symbol
-					</h3>
-					<p className="text-center text-muted-foreground text-base max-w-xs mx-auto mb-6 text-balance">
-						Get a detailed trade plan with entry points, targets, and risk management
-					</p>
-					<div className="flex gap-4">
-						<input
-							type="text"
-							placeholder="AAPL, TSLA, AMZN..."
-							className="flex-1 border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-600"
-						/>
-						<button className="bg-blue-600 text-white rounded-lg px-4 py-3 font-semibold transition-all duration-200 hover:bg-blue-700">
-							Search
-						</button>
-					</div>
-				</div>
-			</section>
 		</main>
 	);
 }
