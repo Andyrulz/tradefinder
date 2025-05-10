@@ -68,6 +68,8 @@ export async function POST(req: Request) {
     let planType: 'pro' | 'premium' | 'free' | null = null;
     if (sub.plan_id === 'P-78F276688T185260BNAPBKUA') planType = 'pro';
     if (sub.plan_id === 'P-6TP24067L2455943LNAPBNGA') planType = 'premium';
+    // Sandbox test plan mapping
+    if (sub.plan_id === 'P-5ML4271244454362WXNWU5NQ') planType = 'pro'; // Map sandbox test plan to 'pro'
     // Handle cancellation or failed payment
     if (
       eventType === 'BILLING.SUBSCRIPTION.CANCELLED' ||

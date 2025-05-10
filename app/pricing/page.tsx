@@ -11,6 +11,9 @@ const supabase = createClient(
 	process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID;
+const PAYPAL_ENV = process.env.NEXT_PUBLIC_PAYPAL_ENV;
+
 const plans = [
 	{
 		name: 'Free',
@@ -101,7 +104,7 @@ export default function PricingPage() {
 				const containerId = `paypal-button-container-${planId}`;
 				if (!window.paypal) {
 					const script = document.createElement('script');
-					script.src = 'https://www.paypal.com/sdk/js?client-id=Ad5flXCt6QiNUCnhfvL8cyFHGEkEPEHbjeK3U6gw7oODRG7-BHZ7xbGTLpdzG0ZZch_Rr_mhzru8irHz&vault=true&intent=subscription';
+					script.src = `https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&vault=true&intent=subscription&env=${PAYPAL_ENV}`;
 					script.async = true;
 					script.onload = () => renderPayPalButton(planId, planType);
 					document.body.appendChild(script);
@@ -120,7 +123,13 @@ export default function PricingPage() {
 					label: 'subscribe',
 				},
 				createSubscription: function (data: any, actions: any) {
-					return actions.subscription.create({ plan_id: planId });
+					return actions.subscription.create({
+						plan_id: planId,
+						application_context: {
+							return_url: window.location.origin + "/dashboard", // or your thank-you page
+							cancel_url: window.location.origin + "/pricing"
+						}
+					});
 				},
 				onApprove: function (data: any, actions: any) {
 					fetch('/api/paypal/subscribe', {
