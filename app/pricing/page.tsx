@@ -2,17 +2,16 @@
 
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import Script from 'next/script';
 
 const supabase = createClient(
 	process.env.NEXT_PUBLIC_SUPABASE_URL!,
 	process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID;
-const PAYPAL_ENV = process.env.NEXT_PUBLIC_PAYPAL_ENV;
+const GUMROAD_PRO_URL = "https://labyrinthian8.gumroad.com/l/jynmay";
+const GUMROAD_PREMIUM_URL = "https://labyrinthian8.gumroad.com/l/klcep";
 
 const plans = [
 	{
@@ -58,21 +57,13 @@ const plans = [
 	},
 ];
 
-declare global {
-  interface Window {
-    paypal?: any;
-  }
-}
-
 export default function PricingPage() {
 	const { data: session } = useSession();
 	const [userPlan, setUserPlan] = useState<'free' | 'pro' | 'premium' | null>(
 		null
 	);
 	const [loading, setLoading] = useState(true);
-	const [showPayPal, setShowPayPal] = useState<{ [key: string]: boolean }>({});
 	const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
-	const paypalRendered = useRef<{ [key: string]: boolean }>({});
 
 	useEffect(() => {
 		async function fetchPlan() {
@@ -95,64 +86,6 @@ export default function PricingPage() {
 		fetchPlan();
 	}, [session]);
 
-	useEffect(() => {
-		if (typeof window === 'undefined' || loading || !session) return;
-		const plansToRender = ['pro', 'premium'];
-		plansToRender.forEach((planType) => {
-			if (showPayPal[planType] && !paypalRendered.current[planType]) {
-				const planId = planType === 'pro' ? 'P-78F276688T185260BNAPBKUA' : 'P-6TP24067L2455943LNAPBNGA';
-				const containerId = `paypal-button-container-${planId}`;
-				if (!window.paypal) {
-					const script = document.createElement('script');
-					script.src = `https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&vault=true&intent=subscription`;
-					script.async = true;
-					script.onload = () => renderPayPalButton(planId, planType);
-					document.body.appendChild(script);
-				} else {
-					renderPayPalButton(planId, planType);
-				}
-				paypalRendered.current[planType] = true;
-			}
-		});
-		function renderPayPalButton(planId: string, planType: string) {
-			window.paypal.Buttons({
-				style: {
-					shape: planType === 'premium' ? 'pill' : 'rect',
-					color: planType === 'premium' ? 'gold' : 'blue',
-					layout: 'vertical',
-					label: 'subscribe',
-				},
-				createSubscription: function (data: any, actions: any) {
-					return actions.subscription.create({
-						plan_id: planId,
-						application_context: {
-							return_url: window.location.origin + "/dashboard", // or your thank-you page
-							cancel_url: window.location.origin + "/pricing"
-						}
-					});
-				},
-				onApprove: function (data: any, actions: any) {
-					fetch('/api/paypal/subscribe', {
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-						},
-						body: JSON.stringify({ subscriptionId: data.subscriptionID, email: session?.user?.email }),
-					})
-						.then((res) => res.json())
-						.then((res) => {
-							if (res.success) {
-								window.location.reload();
-							} else {
-								alert(res.error || 'Subscription failed.');
-							}
-						})
-						.catch(() => alert('Subscription failed.'));
-				},
-			}).render(`#paypal-button-container-${planId}`);
-		}
-	}, [userPlan, loading, session, showPayPal]);
-
 	return (
 		<main className="min-h-screen bg-gradient-to-br from-sky-50 to-blue-100 py-16">
 			<div className="container mx-auto px-4 max-w-5xl">
@@ -172,7 +105,6 @@ export default function PricingPage() {
 							const isFree = plan.name.toLowerCase() === 'free';
 							const isPaid = plan.name.toLowerCase() === 'pro' || plan.name.toLowerCase() === 'premium';
 							const planType = plan.name.toLowerCase();
-							const planId = planType === 'pro' ? 'P-78F276688T185260BNAPBKUA' : planType === 'premium' ? 'P-6TP24067L2455943LNAPBNGA' : '';
 
 							// Hide free plan CTA if user is on pro or premium
 							if (isFree && (userPlan === 'pro' || userPlan === 'premium')) {
@@ -300,16 +232,14 @@ export default function PricingPage() {
 											Current Plan
 										</div>
 									) : isPaid ? (
-										showPayPal[planType] ? (
-											<div id={`paypal-button-container-${planId}`} className="w-full"></div>
-										) : (
-											<button
-												className={`w-full text-center py-3 rounded-xl font-semibold text-lg ${planType === 'premium' ? 'bg-yellow-400 text-white hover:bg-yellow-500' : 'bg-blue-500 text-white hover:bg-blue-600'}`}
-												onClick={() => setShowPayPal(prev => ({ ...prev, [planType]: true }))}
-											>
-												{planType === 'pro' ? 'Upgrade to Pro' : 'Upgrade to Premium'}
-											</button>
-										)
+										<a
+											href={planType === 'pro' ? GUMROAD_PRO_URL : GUMROAD_PREMIUM_URL}
+											target="_blank"
+											rel="noopener noreferrer"
+											className={`w-full text-center py-3 rounded-xl font-semibold text-lg ${planType === 'premium' ? 'bg-yellow-400 text-white hover:bg-yellow-500' : 'bg-blue-500 text-white hover:bg-blue-600'}`}
+										>
+											{planType === 'pro' ? 'Subscribe to Pro' : 'Subscribe to Premium'}
+										</a>
 									) : isFree && session ? (
 										<div className="w-full text-center py-3 rounded-xl font-semibold text-lg bg-sky-200 text-sky-800 cursor-not-allowed">
 											Current Plan
